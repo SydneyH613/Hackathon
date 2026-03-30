@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync — Community</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <script>if (!sessionStorage.getItem("fs_current")) window.location.href = "index.html";</script>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+    <div>
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToDashboard()">Planner</button>
+      <button onclick="goToMeals()">Meals</button>
+      <button onclick="goToProfile()">Profile</button>
+      <button onclick="goHome()">Home</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
+  <div class="comm-hero">
+    <div class="comm-hero-orb comm-hero-orb-a"></div>
+    <div class="comm-hero-orb comm-hero-orb-b"></div>
+    <div class="comm-hero-inner">
+      <div class="comm-hero-badge">🌍 Your Circles</div>
+      <h1 class="comm-hero-title">Show up. <span class="comm-grad">Every day.</span></h1>
+      <p class="comm-hero-sub">Pick what matters to you. Build streaks. See your community do the same. This is accountability that actually works.</p>
+      <div class="comm-hero-stats">
+        <div class="comm-hstat"><div class="comm-hstat-num" id="heroJoined">0</div><div class="comm-hstat-lbl">Communities</div></div>
+        <div class="comm-hstat-sep"></div>
+        <div class="comm-hstat"><div class="comm-hstat-num" id="heroStreak">0</div><div class="comm-hstat-lbl">Best Streak 🔥</div></div>
+        <div class="comm-hstat-sep"></div>
+        <div class="comm-hstat"><div class="comm-hstat-num" id="heroCheckins">0</div><div class="comm-hstat-lbl">Check-ins</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABS ──────────────────────────────────────────────────────────────── -->
+  <div class="comm-tab-bar">
+    <div class="comm-tabs">
+      <button class="comm-tab active" id="tabExplore" onclick="commTab('explore')">🔍 Explore</button>
+      <button class="comm-tab" id="tabMine" onclick="commTab('mine')">⭐ My Circles</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  EXPLORE VIEW                                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="viewExplore" class="comm-view">
+    <div class="comm-wrap">
+      <div class="comm-filters" id="commFilters">
+        <button class="comm-pill active" onclick="commFilter(this,'all')">All</button>
+        <button class="comm-pill" onclick="commFilter(this,'religious')">🕊️ Faith</button>
+        <button class="comm-pill" onclick="commFilter(this,'mindfulness')">🧘 Mindfulness</button>
+        <button class="comm-pill" onclick="commFilter(this,'health')">💪 Health</button>
+        <button class="comm-pill" onclick="commFilter(this,'lifestyle')">🌿 Lifestyle</button>
+      </div>
+      <div class="comm-grid" id="commGrid"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  MY CIRCLES VIEW                                                       -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="viewMine" class="comm-view" style="display:none">
+    <div class="comm-wrap">
+
+      <!-- Today's agenda strip -->
+      <div class="comm-today-strip" id="commTodayStrip" style="display:none">
+        <div class="comm-today-hdr">
+          <span class="comm-today-title">📋 Today's Check-ins</span>
+          <span class="comm-today-date" id="commTodayDate"></span>
+        </div>
+        <div class="comm-today-list" id="commTodayList"></div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="comm-empty" id="commMineEmpty" style="display:none">
+        <div class="comm-empty-icon">🌱</div>
+        <h3>Nothing joined yet</h3>
+        <p>Head to Explore and join a practice that resonates with you.</p>
+        <button class="comm-cta" onclick="commTab('explore')">Browse Communities</button>
+      </div>
+
+      <!-- Circles list -->
+      <div class="comm-mine-list" id="commMineList"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!--  DETAIL VIEW                                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <div id="viewDetail" class="comm-view" style="display:none">
+    <div class="comm-wrap">
+
+      <button class="comm-back" onclick="commBack()">← Back</button>
+
+      <!-- Community header card -->
+      <div class="comm-detail-card" id="commDetailCard">
+        <div class="comm-detail-left">
+          <div class="comm-detail-emoji" id="dEmoji"></div>
+          <div class="comm-detail-info">
+            <div class="comm-detail-cat" id="dCat"></div>
+            <h2 class="comm-detail-title" id="dTitle"></h2>
+            <p class="comm-detail-desc" id="dDesc"></p>
+            <div class="comm-detail-meta-row">
+              <span class="comm-members-count"><span id="dMembers"></span> members</span>
+              <span class="comm-active-today" id="dActiveToday"></span>
+            </div>
+          </div>
+        </div>
+        <div class="comm-detail-actions">
+          <button class="comm-join-btn" id="dJoinBtn" onclick="commToggleJoin()"></button>
+        </div>
+      </div>
+
+      <!-- Joined content -->
+      <div id="commJoinedContent" style="display:none">
+
+        <!-- Streak + progress row -->
+        <div class="comm-stats-row">
+          <div class="comm-streak-box">
+            <div class="comm-streak-flame">🔥</div>
+            <div class="comm-streak-big" id="dStreak">0</div>
+            <div class="comm-streak-lbl">day streak</div>
+            <div class="comm-streak-subs">
+              <span><b id="dTotal">0</b> total</span>
+              <span><b id="dBest">0</b> best</span>
+            </div>
+          </div>
+          <div class="comm-week-progress">
+            <div class="comm-week-hdr">
+              <span class="comm-week-title">This week</span>
+              <span class="comm-week-count" id="dWeekCount">0/7 days</span>
+            </div>
+            <div class="comm-week-dots" id="dWeekDots"></div>
+            <div class="comm-week-labels">Mon Tue Wed Thu Fri Sat Sun</div>
+          </div>
+        </div>
+
+        <!-- Check-in card -->
+        <div class="comm-checkin" id="commCheckinCard">
+          <div class="comm-checkin-hdr">
+            <span class="comm-checkin-title">Today's Check-in</span>
+            <span class="comm-checkin-date" id="dCheckinDate"></span>
+          </div>
+          <div class="comm-checkin-done" id="dCheckinDone" style="display:none">
+            <span>✅</span><span>Done for today — see you tomorrow!</span>
+          </div>
+          <div id="dCheckinForm">
+            <div class="comm-photo-wrap" id="dPhotoWrap" style="display:none">
+              <div class="comm-photo-drop" id="dPhotoDrop" onclick="document.getElementById('dPhotoInput').click()">
+                <div class="comm-photo-inner" id="dPhotoInner">
+                  <div class="comm-photo-icon">📷</div>
+                  <div class="comm-photo-hint">Tap to snap a photo</div>
+                </div>
+              </div>
+              <input type="file" id="dPhotoInput" accept="image/*" capture="environment" style="display:none" onchange="commPhotoChanged(this)">
+            </div>
+            <textarea class="comm-note" id="dNote" placeholder="Add a note… (optional)" rows="2"></textarea>
+            <button class="comm-submit-btn" onclick="commCheckIn()">✓ Check In</button>
+          </div>
+        </div>
+
+        <!-- Two-column: leaderboard + feed -->
+        <div class="comm-two-col">
+          <div class="comm-lb-card">
+            <div class="comm-card-hdr">🏆 Streak Leaderboard</div>
+            <div class="comm-lb-rows" id="dLbRows"></div>
+          </div>
+          <div class="comm-feed-card">
+            <div class="comm-card-hdr">📸 Today's Posts</div>
+            <div class="comm-feed-items" id="dFeedItems"></div>
+          </div>
+        </div>
+
+      </div><!-- /joined content -->
+
+    </div>
+  </div>
+
+  <!-- ── PHOTO LIGHTBOX ─────────────────────────────────────────────────── -->
+  <div id="photoLightbox" class="comm-lightbox" style="display:none" onclick="commCloseLightbox()">
+    <div class="comm-lightbox-inner" onclick="event.stopPropagation()">
+      <button class="comm-lb-close" onclick="commCloseLightbox()">✕</button>
+      <img id="lbImg" src="" alt="">
+      <div class="comm-lb-meta" id="lbMeta"></div>
+    </div>
+  </div>
+
+  <!-- ── STREAK TOAST ───────────────────────────────────────────────────── -->
+  <div id="streakToast" class="comm-toast" style="display:none"></div>
+
+  <script type="module" src="../js/navigation.js"></script>
+  <script src="../js/community.js"></script>
+</body>
+</html>

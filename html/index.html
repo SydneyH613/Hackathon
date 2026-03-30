@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="landing">
+
+  <!-- Redirect to welcome splash on first visit of a new session -->
+  <script>
+    if (!sessionStorage.getItem("fs_seen_welcome") && !sessionStorage.getItem("fs_current")) {
+      window.location.replace("welcome.html");
+    }
+  </script>
+
+  <!-- ── AUTH OVERLAY ──────────────────────────────────────────────────────── -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-modal">
+      <div class="auth-logo">⚡ FitSync</div>
+      <p class="auth-tagline">Your training, your schedule.</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabSignIn" onclick="switchAuthTab('signin')">Sign In</button>
+        <button class="auth-tab" id="tabRegister" onclick="switchAuthTab('register')">Register</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <div id="formSignIn" class="auth-form">
+        <div class="auth-field">
+          <label>Username</label>
+          <input type="text" id="siUsername" placeholder="Username" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="siPassword" placeholder="Password" autocomplete="current-password">
+        </div>
+        <div class="auth-error" id="siError"></div>
+        <button class="auth-submit" id="siSubmit" onclick="handleSignIn()">Sign In</button>
+        <p class="auth-switch">New here? <a onclick="switchAuthTab('register')">Create an account</a></p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="formRegister" class="auth-form" style="display:none">
+        <div class="auth-field">
+          <label>Username</label>
+          <input type="text" id="regUsername" placeholder="Choose a username" autocomplete="username">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="Min. 6 characters" autocomplete="new-password">
+        </div>
+        <div class="auth-field">
+          <label>Confirm Password</label>
+          <input type="password" id="regConfirm" placeholder="Confirm password" autocomplete="new-password">
+        </div>
+        <div class="auth-error" id="regError"></div>
+        <button class="auth-submit" id="regSubmit" onclick="handleRegister()">Create Account</button>
+        <p class="auth-switch">Already registered? <a onclick="switchAuthTab('signin')">Sign in</a></p>
+      </div>
+
+      <p class="auth-privacy">🔒 Data is stored locally on your device only.</p>
+    </div>
+  </div>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+
+    <div id="navGuest" class="nav-auth-btns">
+      <button class="nav-btn-outline" onclick="switchAuthTab('signin'); document.getElementById('authOverlay').style.display='flex';">Sign In</button>
+      <button onclick="switchAuthTab('register'); document.getElementById('authOverlay').style.display='flex';">Get Started</button>
+    </div>
+
+    <div id="navUser" class="nav-user-area" style="display:none">
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToDashboard()">Planner</button>
+      <button onclick="goToMeals()">Meals</button>
+      <button onclick="goToCommunity()">Community</button>
+      <button onclick="goToProfile()">Profile</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-visual">
+      <div class="hero-visual-orb hero-visual-orb-1"></div>
+      <div class="hero-visual-orb hero-visual-orb-2"></div>
+      <div class="hero-visual-grid">
+        <div class="hero-stat-pill"><span class="hero-stat-icon">🔥</span><div><div class="hero-stat-val">Day 14</div><div class="hero-stat-sub">Streak active</div></div></div>
+        <div class="hero-stat-pill"><span class="hero-stat-icon">⚡</span><div><div class="hero-stat-val">87%</div><div class="hero-stat-sub">Weekly goal</div></div></div>
+        <div class="hero-stat-pill"><span class="hero-stat-icon">💪</span><div><div class="hero-stat-val">5 of 5</div><div class="hero-stat-sub">Sessions done</div></div></div>
+        <div class="hero-stat-pill"><span class="hero-stat-icon">🥗</span><div><div class="hero-stat-val">2,140</div><div class="hero-stat-sub">kcal today</div></div></div>
+        <div class="hero-stat-pill hero-stat-pill-wide"><span class="hero-stat-icon">📅</span><div><div class="hero-stat-val">Next: Upper Body</div><div class="hero-stat-sub">Tomorrow · 45 min</div></div></div>
+        <div class="hero-visual-ring">
+          <svg viewBox="0 0 120 120" class="ring-svg">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(56,189,248,0.1)" stroke-width="10"/>
+            <circle cx="60" cy="60" r="50" fill="none" stroke="url(#ringGrad)" stroke-width="10" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="40" transform="rotate(-90 60 60)"/>
+            <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#a855f7"/></linearGradient></defs>
+          </svg>
+          <div class="ring-label"><div class="ring-val">87%</div><div class="ring-sub">Week</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-text">
+      <div class="hero-badge">
+        <span>⚡</span> Welcome to FitSync
+      </div>
+      <h2>Train. Eat. Connect. <span style="background:linear-gradient(135deg,#38bdf8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Thrive.</span></h2>
+      <p>FitSync brings together intelligent training plans, personalised nutrition, and a community that keeps you accountable — all built around your life, your schedule, and your goals.</p>
+      <div class="hero-pillar-row">
+        <div class="hero-pillar">
+          <span class="hero-pillar-icon">🏋️</span>
+          <div>
+            <div class="hero-pillar-label">Training</div>
+            <div class="hero-pillar-sub">Smart, adaptive plans</div>
+          </div>
+        </div>
+        <div class="hero-pillar">
+          <span class="hero-pillar-icon">🥗</span>
+          <div>
+            <div class="hero-pillar-label">Nutrition</div>
+            <div class="hero-pillar-sub">Personalised meal plans</div>
+          </div>
+        </div>
+        <div class="hero-pillar">
+          <span class="hero-pillar-icon">🌍</span>
+          <div>
+            <div class="hero-pillar-label">Community</div>
+            <div class="hero-pillar-sub">Streaks &amp; accountability</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <button class="btn-primary" onclick="goToDashboard()">Get Started →</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-item">
+      <div class="stat-num">📅</div>
+      <div class="stat-label">Schedule-aware training</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">🍽️</div>
+      <div class="stat-label">7-day meal plans</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">🌍</div>
+      <div class="stat-label">Community &amp; streaks</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">🏥</div>
+      <div class="stat-label">Health-adaptive workouts</div>
+    </div>
+  </div>
+
+  <section class="features">
+    <h3>Everything you need, in one place</h3>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">👤</span>
+        <h4>Truly Personalised</h4>
+        <p>Experience, schedule, health conditions, and available equipment all feed into one plan built specifically for you.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🥗</span>
+        <h4>Smart Meal Planning</h4>
+        <p>Generate a full 7-day meal plan tailored to your dietary preferences, kitchen staples, and training goals — with shopping lists included.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">🌍</span>
+        <h4>Community &amp; Accountability</h4>
+        <p>Join daily practice circles — from meditation and cold showers to faith routines — and build streaks alongside people who share your values.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="features process">
+    <h3>Three steps to your week</h3>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">1️⃣</span>
+        <h4>Tell us about yourself</h4>
+        <p>Experience level, health conditions, dietary needs, and equipment.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">2️⃣</span>
+        <h4>Connect your schedule</h4>
+        <p>Google Calendar, .ics import, or manual entry — FitSync finds the gaps.</p>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">3️⃣</span>
+        <h4>Train with your plan</h4>
+        <p>A complete weekly programme with exercises, timings, and calendar exports.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="photo-strip">
+    <p class="photo-strip-title">Every session. Purpose-built.</p>
+    <div class="photo-grid">
+      <div class="photo-item photo-item-strength">
+        <div class="photo-item-icon">🏋️</div>
+        <div class="photo-item-content">
+          <div class="photo-caption">Strength</div>
+          <div class="photo-sub">Progressive overload, compound lifts, and targeted accessory work.</div>
+        </div>
+      </div>
+      <div class="photo-item photo-item-cardio">
+        <div class="photo-item-icon">🏃</div>
+        <div class="photo-item-content">
+          <div class="photo-caption">Cardio</div>
+          <div class="photo-sub">Zone 2, intervals, HIIT — matched to your goal and schedule.</div>
+        </div>
+      </div>
+      <div class="photo-item photo-item-mobility">
+        <div class="photo-item-icon">🧘</div>
+        <div class="photo-item-content">
+          <div class="photo-caption">Mobility &amp; Recovery</div>
+          <div class="photo-sub">Stretching, breathwork, and active recovery built into every week.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/navigation.js"></script>
+
+  <script type="module">
+    import { register, signIn, getCurrentUser } from '../js/auth.js';
+
+    window.switchAuthTab = function(tab) {
+      const isSignIn = tab === 'signin';
+      document.getElementById('tabSignIn').classList.toggle('active', isSignIn);
+      document.getElementById('tabRegister').classList.toggle('active', !isSignIn);
+      document.getElementById('formSignIn').style.display  = isSignIn ? 'block' : 'none';
+      document.getElementById('formRegister').style.display = isSignIn ? 'none'  : 'block';
+      document.getElementById('siError').textContent  = '';
+      document.getElementById('regError').textContent = '';
+    };
+
+    function onAuthSuccess(username) {
+      const overlay = document.getElementById('authOverlay');
+      overlay.style.opacity = '0';
+      overlay.style.pointerEvents = 'none';
+      setTimeout(() => { overlay.style.display = 'none'; }, 400);
+
+      document.getElementById('navGuest').style.display = 'none';
+      const navUser = document.getElementById('navUser');
+      navUser.style.display = 'flex';
+      document.getElementById('navWelcomeName').textContent = 'Hi, ' + username;
+    }
+
+    window.handleSignIn = async function() {
+      const username = document.getElementById('siUsername').value.trim();
+      const password = document.getElementById('siPassword').value;
+      const errEl    = document.getElementById('siError');
+      const btn      = document.getElementById('siSubmit');
+
+      errEl.textContent = '';
+      if (!username || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
+
+      btn.disabled    = true;
+      btn.textContent = 'Signing in…';
+
+      const result = await signIn(username, password);
+      if (result.ok) {
+        onAuthSuccess(username);
+      } else {
+        errEl.textContent = result.error;
+        btn.disabled    = false;
+        btn.textContent = 'Sign In';
+      }
+    };
+
+    window.handleRegister = async function() {
+      const username = document.getElementById('regUsername').value.trim();
+      const password = document.getElementById('regPassword').value;
+      const confirm  = document.getElementById('regConfirm').value;
+      const errEl    = document.getElementById('regError');
+      const btn      = document.getElementById('regSubmit');
+
+      errEl.textContent = '';
+      if (!username || !password || !confirm) { errEl.textContent = 'Please fill in all fields.'; return; }
+      if (password !== confirm) { errEl.textContent = 'Passwords do not match.'; return; }
+
+      btn.disabled    = true;
+      btn.textContent = 'Creating account…';
+
+      const result = await register(username, password);
+      if (result.ok) {
+        onAuthSuccess(username);
+      } else {
+        errEl.textContent = result.error;
+        btn.disabled    = false;
+        btn.textContent = 'Create Account';
+      }
+    };
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const overlay = document.getElementById('authOverlay');
+      if (!overlay || overlay.style.display === 'none' || overlay.style.opacity === '0') return;
+      const signInVisible = document.getElementById('formSignIn').style.display !== 'none';
+      if (signInVisible) handleSignIn(); else handleRegister();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const user = getCurrentUser();
+      if (user) onAuthSuccess(user);
+    });
+  </script>
+
+</body>
+</html>

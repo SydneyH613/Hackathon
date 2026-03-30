@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync — Meals</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <!-- Auth guard: redirect immediately if no session -->
+  <script>if (!sessionStorage.getItem("fs_current")) window.location.href = "index.html";</script>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+    <div>
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToDashboard()">Planner</button>
+      <button onclick="goToCommunity()">Community</button>
+      <button onclick="goToProfile()">Profile</button>
+      <button onclick="goHome()">Home</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="meals-main">
+
+    <!-- LEFT COLUMN: INPUTS -->
+    <div class="meals-left">
+
+      <section class="card">
+        <h2>Dietary Preferences</h2>
+
+        <div id="dietSyncBanner" class="diet-sync-banner" style="display:none">
+          <span>✓</span>
+          <span id="dietSyncText">Synced from your profile.</span>
+          <a href="dashboard.html" class="diet-sync-edit">Edit →</a>
+        </div>
+
+        <p class="section-note" id="dietNoBanner" style="display:none">
+          No preferences set in your profile.
+          <a href="dashboard.html" style="color:var(--accent-blue)">Add them →</a>
+          or select below.
+        </p>
+
+        <!-- Smart dietary text input (validates against known preferences) -->
+        <div class="diet-input-wrap" id="dietFallbackPicker">
+          <div class="diet-input-row">
+            <input type="text" id="dietTextInput" placeholder="e.g. vegan, gluten-free, halal…" autocomplete="off" onkeydown="handleDietKey(event)" oninput="showDietSuggestions(this.value)">
+            <button class="diet-add-btn" onclick="addDietPref()">Add</button>
+          </div>
+          <div class="diet-suggestions" id="dietSuggestions"></div>
+          <div class="diet-error" id="dietError"></div>
+          <div class="diet-selected-tags" id="dietSelectedTags"></div>
+          <div class="diet-hint">Try: vegan · halal · gluten-free · keto · dairy-free · vegetarian · paleo · nut-free · kosher · low-sugar · high-protein · pescatarian · raw food · whole30 · fodmap · low-sodium</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Your Kitchen</h2>
+        <label for="groceryInput">What's available at home?</label>
+        <textarea id="groceryInput" placeholder="e.g. chicken, eggs, rice, broccoli, avocado, oats, salmon…"></textarea>
+
+        <div class="input-hint">
+          Quick add:
+          <span class="hint-chip" onclick="addIngredient('chicken')">🍗 chicken</span>
+          <span class="hint-chip" onclick="addIngredient('eggs')">🥚 eggs</span>
+          <span class="hint-chip" onclick="addIngredient('rice')">🍚 rice</span>
+          <span class="hint-chip" onclick="addIngredient('salmon')">🐟 salmon</span>
+          <span class="hint-chip" onclick="addIngredient('avocado')">🥑 avocado</span>
+          <span class="hint-chip" onclick="addIngredient('oats')">🥣 oats</span>
+        </div>
+
+        <label for="mealStyle">Meal Style</label>
+        <select id="mealStyle">
+          <option value="balanced" selected>Balanced</option>
+          <option value="highProtein">High Protein</option>
+          <option value="light">Light &amp; Lean</option>
+        </select>
+
+        <label for="cookTime">Cook time</label>
+        <select id="cookTime">
+          <option value="quick">Quick (under 15 min)</option>
+          <option value="normal" selected>Normal (15–30 min)</option>
+          <option value="extended">Extended (30+ min)</option>
+        </select>
+
+        <button onclick="generateMeals()">Generate Meal Plan →</button>
+      </section>
+
+      <section class="card">
+        <h2>Nearby Stores</h2>
+        <p class="stores-intro-text">Find supermarkets, butchers, and health food stores near you — with smart tips to shop on a budget and stock up for your week.</p>
+        <div class="stores-quick-facts">
+          <div class="stores-quick-fact">
+            <span class="stores-fact-icon">🌿</span>
+            <span>Seasonal produce costs up to 50% less</span>
+          </div>
+          <div class="stores-quick-fact">
+            <span class="stores-fact-icon">🧊</span>
+            <span>Bulk-freeze protein to cut spend by 30%</span>
+          </div>
+          <div class="stores-quick-fact">
+            <span class="stores-fact-icon">⏰</span>
+            <span>Evening markdowns on fresh meat &amp; fish</span>
+          </div>
+          <div class="stores-quick-fact">
+            <span class="stores-fact-icon">🏷️</span>
+            <span>Generic staples save 15–25% vs brands</span>
+          </div>
+        </div>
+        <button class="btn-find-stores" onclick="findNearbyStores()">📍 Find Stores Near Me</button>
+        <div id="storeResults"></div>
+      </section>
+
+      <!-- COACHING INSIGHT CARD — fills remaining left-column height -->
+      <section class="card meals-coach-card" id="mealsCoachCard">
+        <div class="mcc-header">
+          <span class="mcc-badge">EXPERT COACHING</span>
+          <span class="mcc-sport-label" id="mccSportLabel">General Fitness</span>
+        </div>
+        <div id="mccBody" class="mcc-body-pre">
+          <div class="mcc-pre-icon">🏆</div>
+          <p class="mcc-pre-text">Generate your plan to unlock personalised <strong>sport-specific coaching</strong> — nutrition timing, protein targets, hydration protocols, and performance tips tailored to your training.</p>
+          <div class="mcc-pillars-static">
+            <div class="mcc-pillar-static"><span>⏰</span><span>Nutrient Timing</span></div>
+            <div class="mcc-pillar-static"><span>💧</span><span>Hydration Targets</span></div>
+            <div class="mcc-pillar-static"><span>⚡</span><span>Performance Tips</span></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT COLUMN: RESULTS -->
+    <div class="meals-right">
+
+      <section class="card">
+        <h2>Meal Plan</h2>
+        <div id="mealPersonalNote" class="summary-panel" style="display:none"></div>
+        <div id="mealOutput">
+          <div class="empty-state">
+            <span class="empty-icon">🍽️</span>
+            <p>Set your preferences and generate meals.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+  <!-- ── SHOPPING LIST — full-width at the bottom ──────────────────────────── -->
+  <section class="shopping-strip-section" id="shoppingStripSection" style="display:none">
+    <div class="shopping-strip-inner">
+      <div id="shoppingList"></div>
+    </div>
+  </section>
+
+  <script type="module" src="../js/navigation.js"></script>
+  <script type="module" src="../js/script.js"></script>
+
+  <script>
+    window.addIngredient = function(item) {
+      const ta  = document.getElementById("groceryInput");
+      const val = ta.value.trim();
+      ta.value  = val ? (val.endsWith(",") ? val + " " + item : val + ", " + item) : item;
+      ta.focus();
+    };
+
+    // ── Smart dietary preference system ──────────────────────────────────────
+    // Canonical list of known dietary preferences with aliases
+    const DIET_PREFS = [
+      { canonical:"Vegan",          aliases:["vegan","plant-based","plant based","no meat","no animal"] },
+      { canonical:"Vegetarian",     aliases:["vegetarian","veggie","no meat","lacto-ovo"] },
+      { canonical:"Pescatarian",    aliases:["pescatarian","pescetarian","fish only","no red meat"] },
+      { canonical:"Halal",          aliases:["halal","muslim","islamic","zabiha"] },
+      { canonical:"Kosher",         aliases:["kosher","jewish","kashrut"] },
+      { canonical:"Gluten-Free",    aliases:["gluten-free","gluten free","coeliac","celiac","no gluten","gf"] },
+      { canonical:"Dairy-Free",     aliases:["dairy-free","dairy free","no dairy","no milk","lactose-free","lactose free","lactose intolerant"] },
+      { canonical:"Nut-Free",       aliases:["nut-free","nut free","no nuts","peanut-free","peanut free","nut allergy"] },
+      { canonical:"Keto",           aliases:["keto","ketogenic","low-carb","low carb","ketosis","high fat low carb"] },
+      { canonical:"Paleo",          aliases:["paleo","paleolithic","caveman diet","primal"] },
+      { canonical:"Whole30",        aliases:["whole30","whole 30"] },
+      { canonical:"Low-Sugar",      aliases:["low-sugar","low sugar","no sugar","sugar-free","sugar free","diabetic"] },
+      { canonical:"Low-Sodium",     aliases:["low-sodium","low sodium","no salt","reduced sodium","heart healthy"] },
+      { canonical:"High-Protein",   aliases:["high-protein","high protein","protein rich","muscle building diet"] },
+      { canonical:"FODMAP",         aliases:["fodmap","low fodmap","ibs diet"] },
+      { canonical:"Raw Food",       aliases:["raw food","raw vegan","raw diet","raw"] },
+      { canonical:"Intermittent Fasting", aliases:["intermittent fasting","if","16:8","time restricted eating","fasting"] },
+      { canonical:"Mediterranean",  aliases:["mediterranean","med diet"] },
+      { canonical:"Egg-Free",       aliases:["egg-free","egg free","no eggs"] },
+      { canonical:"Soy-Free",       aliases:["soy-free","soy free","no soy"] },
+    ];
+
+    // Active preferences set (canonical names)
+    const activeDietPrefs = new Set();
+
+    function normaliseDietInput(str) {
+      return str.trim().toLowerCase().replace(/[^a-z0-9\-\s]/g, "").replace(/\s+/g, " ");
+    }
+
+    function matchDietPref(input) {
+      const n = normaliseDietInput(input);
+      if (!n) return null;
+      for (const p of DIET_PREFS) {
+        if (p.aliases.some(a => a === n || n.includes(a) || a.includes(n))) return p.canonical;
+      }
+      return null;
+    }
+
+    function getSuggestions(input) {
+      const n = normaliseDietInput(input);
+      if (!n) return [];
+      return DIET_PREFS.filter(p =>
+        p.aliases.some(a => a.startsWith(n) || a.includes(n)) ||
+        p.canonical.toLowerCase().startsWith(n)
+      ).slice(0, 5);
+    }
+
+    window.showDietSuggestions = function(val) {
+      const el = document.getElementById("dietSuggestions");
+      const err = document.getElementById("dietError");
+      if (!el) return;
+      if (err) err.textContent = "";
+      const suggs = getSuggestions(val);
+      if (!val.trim() || !suggs.length) { el.innerHTML = ""; el.style.display = "none"; return; }
+      el.style.display = "block";
+      el.innerHTML = suggs.map(p =>
+        `<div class="diet-suggestion-item" onclick="selectDietSuggestion('${p.canonical}')">${p.canonical}</div>`
+      ).join("");
+    };
+
+    window.selectDietSuggestion = function(canonical) {
+      addDietPrefByCanonical(canonical);
+      const inp = document.getElementById("dietTextInput");
+      if (inp) inp.value = "";
+      const el = document.getElementById("dietSuggestions");
+      if (el) { el.innerHTML = ""; el.style.display = "none"; }
+    };
+
+    window.handleDietKey = function(e) {
+      if (e.key === "Enter") { e.preventDefault(); addDietPref(); }
+    };
+
+    window.addDietPref = function() {
+      const inp = document.getElementById("dietTextInput");
+      const err = document.getElementById("dietError");
+      if (!inp) return;
+      const val = inp.value.trim();
+      if (!val) return;
+      const matched = matchDietPref(val);
+      if (!matched) {
+        if (err) { err.textContent = `"${val}" isn't a recognised dietary preference. Try terms like vegan, halal, gluten-free, or keto.`; }
+        return;
+      }
+      if (err) err.textContent = "";
+      addDietPrefByCanonical(matched);
+      inp.value = "";
+      const sugg = document.getElementById("dietSuggestions");
+      if (sugg) { sugg.innerHTML = ""; sugg.style.display = "none"; }
+    };
+
+    function addDietPrefByCanonical(canonical) {
+      if (activeDietPrefs.has(canonical)) return;
+      activeDietPrefs.add(canonical);
+      renderDietTags();
+    }
+
+    window.removeDietPref = function(canonical) {
+      activeDietPrefs.delete(canonical);
+      renderDietTags();
+    };
+
+    function renderDietTags() {
+      const el = document.getElementById("dietSelectedTags");
+      if (!el) return;
+      el.innerHTML = [...activeDietPrefs].map(p =>
+        `<span class="diet-selected-tag">${p}<button class="diet-tag-remove" onclick="removeDietPref('${p}')" aria-label="Remove">×</button></span>`
+      ).join("");
+    }
+
+    // Expose active prefs for generateMeals to read
+    window.getActiveDietaryPrefs = function() { return [...activeDietPrefs]; };
+
+    // Close suggestions when clicking outside
+    document.addEventListener("click", function(e) {
+      const wrap = document.getElementById("dietFallbackPicker");
+      const sugg = document.getElementById("dietSuggestions");
+      if (sugg && wrap && !wrap.contains(e.target)) { sugg.innerHTML = ""; sugg.style.display = "none"; }
+    });
+
+    // ── Dietary sync on load ──────────────────────────────────────────────────
+    window.addEventListener("load", function () {
+      try {
+        const user    = sessionStorage.getItem("fs_current");
+        const raw     = user ? localStorage.getItem(`fs_${user.toLowerCase()}_planProfile`) : null;
+        const profile = raw ? JSON.parse(raw) : null;
+        const prefs   = profile?.dietaryPreferences || [];
+        const banner  = document.getElementById("dietSyncBanner");
+        const noBanner= document.getElementById("dietNoBanner");
+        const picker  = document.getElementById("dietFallbackPicker");
+
+        if (prefs.length) {
+          prefs.forEach(p => addDietPrefByCanonical(p));
+          if (banner) {
+            document.getElementById("dietSyncText").textContent =
+              "Synced from your plan: " + prefs.join(", ") + ".";
+            banner.style.display = "flex";
+          }
+          if (picker)   picker.style.display   = "";
+          if (noBanner) noBanner.style.display = "none";
+        } else {
+          if (banner)   banner.style.display   = "none";
+          if (picker)   picker.style.display   = "";
+          if (noBanner) noBanner.style.display = "";
+        }
+
+        if (profile?.goal) {
+          const goalMap = { lose:"Fat Loss", gain:"Muscle Gain", maintain:"Maintenance" };
+          document.title = `FitSync — Meals (${goalMap[profile.goal]||""})`;
+        }
+      } catch {}
+
+      // ── Historical meal plan view (navigated from profile page) ────────────
+      if (sessionStorage.getItem("fs_viewMealHistIdx") !== null) {
+        if (typeof window.renderHistoricalMealPlan === "function") {
+          window.renderHistoricalMealPlan();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

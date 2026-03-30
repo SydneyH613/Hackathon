@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync — Your Week</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="schedule-page">
+
+  <!-- Auth guard: redirect immediately if no session -->
+  <script>if (!sessionStorage.getItem("fs_current")) window.location.href = "index.html";</script>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+    <div>
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToDashboard()">← Planner</button>
+      <button onclick="goToCommunity()">Community</button>
+      <button onclick="goToMeals()">Meals</button>
+      <button onclick="goToProfile()">Profile</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── SCHEDULE HERO ─────────────────────────────────────────────────────── -->
+  <header class="schedule-hero">
+    <div class="schedule-hero-inner">
+      <div class="schedule-hero-badge">YOUR WEEK</div>
+      <h1 class="schedule-hero-title" id="scheduleTitle">Loading your plan…</h1>
+      <p class="schedule-hero-sub" id="scheduleSubtitle"></p>
+
+      <div class="schedule-hero-stats" id="scheduleStats"></div>
+    </div>
+
+    <!-- animated orbs -->
+    <div class="sched-orb sched-orb-1"></div>
+    <div class="sched-orb sched-orb-2"></div>
+    <div class="sched-orb sched-orb-3"></div>
+  </header>
+
+  <!-- ── SYNC BAR ───────────────────────────────────────────────────────────── -->
+  <div class="sched-sync-bar">
+    <div class="sched-sync-bar-inner">
+      <div class="sched-sync-bar-left">
+        <span class="gcal-icon">📅</span>
+        <div>
+          <div class="sched-sync-title">Add to your calendar</div>
+          <div class="sched-sync-desc">Export these sessions to Google Calendar, Apple Calendar, or Outlook in one tap.</div>
+        </div>
+      </div>
+      <div class="sched-sync-actions">
+        <button class="sched-sync-btn sched-sync-primary" onclick="downloadAllICS()">⬇ Download Full Week (.ics)</button>
+        <a class="sched-sync-btn sched-sync-gcal" id="gcalAddAllBtn" href="#" target="_blank" rel="noopener">+ Add All to Google Calendar</a>
+        <button class="sched-sync-btn sched-sync-secondary" onclick="goToDashboard()">✏️ Edit Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MAIN SCHEDULE LAYOUT ────────────────────────────────────────────────── -->
+  <main class="sched-main">
+
+    <!-- LEFT SIDEBAR: coaching info -->
+    <div class="sched-sidebar" id="schedSidebar"></div>
+
+    <!-- RIGHT CONTENT: session cards stacked vertically -->
+    <div class="sched-content">
+      <div class="sched-grid" id="schedGrid">
+        <div class="sched-loading">
+          <div class="sched-spinner"></div>
+          <p>Building your schedule…</p>
+        </div>
+      </div>
+
+      <!-- ACTION ROW BOTTOM -->
+      <div class="sched-bottom-bar">
+        <button class="sched-bottom-btn sched-bottom-ics" onclick="downloadAllICS()">⬇ Download Full Week (.ics)</button>
+        <button class="sched-bottom-btn sched-bottom-edit" onclick="goToDashboard()">← Edit Preferences</button>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="../js/navigation.js"></script>
+  <script type="module" src="../js/script.js"></script>
+
+</body>
+</html>

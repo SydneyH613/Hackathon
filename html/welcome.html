@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary:   #040a14;
+      --bg-secondary: #071325;
+      --accent-blue:  #38bdf8;
+      --accent-indigo:#0ea5e9;
+      --accent-cyan:  #22d3ee;
+      --accent-purple:#a855f7;
+      --accent-violet:#8b5cf6;
+      --text-primary: #f1f5f9;
+      --text-secondary:#94a3b8;
+      --border: rgba(56,189,248,0.18);
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-primary);
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(56,189,248,0.18) 0%, transparent 40%),
+        radial-gradient(circle at 85% 75%, rgba(168,85,247,0.2)  0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(34,211,238,0.06) 0%, transparent 60%),
+        linear-gradient(160deg, var(--bg-secondary) 0%, var(--bg-primary) 70%);
+    }
+
+    /* ── GRID OVERLAY ───────────────────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(56,189,248,0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.055) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent 90%);
+      z-index: 0;
+    }
+
+    /* ── AMBIENT ORBS ───────────────────────────────────────────── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(80px);
+      animation: orb-drift 12s ease-in-out infinite alternate;
+    }
+    .orb-a {
+      width: 520px; height: 520px;
+      background: radial-gradient(circle, rgba(56,189,248,0.22), transparent 70%);
+      top: -160px; left: -160px;
+      animation-duration: 14s;
+    }
+    .orb-b {
+      width: 440px; height: 440px;
+      background: radial-gradient(circle, rgba(168,85,247,0.25), transparent 70%);
+      bottom: -140px; right: -140px;
+      animation-duration: 11s;
+      animation-direction: alternate-reverse;
+    }
+    .orb-c {
+      width: 280px; height: 280px;
+      background: radial-gradient(circle, rgba(34,211,238,0.14), transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation-duration: 18s;
+    }
+
+    @keyframes orb-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.06); }
+    }
+
+    /* ── MAIN STAGE ─────────────────────────────────────────────── */
+    .stage {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0;
+      padding: 0 32px;
+    }
+
+    /* ── LOGO MARK ──────────────────────────────────────────────── */
+    .logo-wrap {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      margin-bottom: 36px;
+      animation: logo-enter 1s cubic-bezier(0.16,1,0.3,1) both;
+    }
+
+    /* Rotating outer ring */
+    .logo-ring {
+      position: absolute;
+      inset: 0;
+      animation: ring-spin 8s linear infinite;
+    }
+
+    /* Static glow disc behind */
+    .logo-glow {
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(56,189,248,0.22), rgba(168,85,247,0.14), transparent 70%);
+      filter: blur(12px);
+      animation: glow-pulse 3s ease-in-out infinite alternate;
+    }
+
+    /* Inner glass circle */
+    .logo-inner {
+      position: absolute;
+      inset: 16px;
+      border-radius: 50%;
+      background: rgba(10,18,36,0.85);
+      border: 1px solid rgba(56,189,248,0.3);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* SVG bolt */
+    .logo-bolt {
+      width: 44px;
+      height: 44px;
+    }
+
+    @keyframes logo-enter {
+      from { opacity: 0; transform: scale(0.6) rotate(-15deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    @keyframes ring-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    @keyframes glow-pulse {
+      from { opacity: 0.7; transform: scale(0.95); }
+      to   { opacity: 1;   transform: scale(1.05); }
+    }
+
+    /* ── WORDMARK ───────────────────────────────────────────────── */
+    .wordmark {
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: -3px;
+      line-height: 1;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 20%, rgba(56,189,248,0.85) 55%, rgba(168,85,247,0.9) 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fade-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.2s both;
+    }
+
+    /* ── TAGLINE ────────────────────────────────────────────────── */
+    .tagline {
+      font-size: 17px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      letter-spacing: 0.01em;
+      max-width: 380px;
+      line-height: 1.6;
+      margin-bottom: 14px;
+      animation: fade-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.35s both;
+    }
+
+    /* ── PILLAR CHIPS ────────────────────────────────────────────── */
+    .pillar-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 48px;
+      flex-wrap: wrap;
+      justify-content: center;
+      animation: fade-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.45s both;
+    }
+
+    .pillar-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56,189,248,0.07);
+      border: 1px solid rgba(56,189,248,0.18);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+
+    .pillar-chip span:first-child { font-size: 14px; }
+
+    /* ── ENTER BUTTON ───────────────────────────────────────────── */
+    .enter-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 17px 44px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-violet));
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      box-shadow: 0 6px 32px rgba(56,189,248,0.38), 0 0 0 1px rgba(56,189,248,0.2);
+      transition: transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease;
+      animation: fade-up 0.9s cubic-bezier(0.16,1,0.3,1) 0.55s both;
+      overflow: hidden;
+    }
+
+    /* Shimmer sweep on hover */
+    .enter-btn::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,0.18) 50%, transparent 65%);
+      transform: translateX(-100%);
+      transition: transform 0.55s ease;
+    }
+
+    .enter-btn:hover::before { transform: translateX(100%); }
+
+    .enter-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 50px rgba(56,189,248,0.5), 0 0 0 1px rgba(56,189,248,0.35);
+    }
+
+    .enter-btn:active { transform: translateY(-1px); }
+
+    .enter-arrow {
+      font-size: 18px;
+      transition: transform 0.25s ease;
+    }
+    .enter-btn:hover .enter-arrow { transform: translateX(4px); }
+
+    /* ── BOTTOM BUILD INFO ──────────────────────────────────────── */
+    .build-note {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(148,163,184,0.4);
+      letter-spacing: 0.04em;
+      animation: fade-up 1s ease 0.9s both;
+      white-space: nowrap;
+    }
+
+    /* ── SHARED KEYFRAMES ───────────────────────────────────────── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .wordmark { font-size: 52px; letter-spacing: -2px; }
+      .logo-wrap { width: 100px; height: 100px; margin-bottom: 28px; }
+      .tagline { font-size: 15px; }
+      .enter-btn { padding: 15px 34px; font-size: 15px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient orbs -->
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+  <div class="orb orb-c"></div>
+
+  <div class="stage">
+
+    <!-- Logo mark -->
+    <div class="logo-wrap">
+      <div class="logo-glow"></div>
+
+      <!-- Rotating ring SVG -->
+      <svg class="logo-ring" viewBox="0 0 130 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="ringGradA" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.9"/>
+            <stop offset="60%" stop-color="#a855f7" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <!-- Outer track (faint) -->
+        <circle cx="65" cy="65" r="60" stroke="rgba(56,189,248,0.12)" stroke-width="2"/>
+        <!-- Animated arc -->
+        <circle cx="65" cy="65" r="60"
+          stroke="url(#ringGradA)"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-dasharray="240 140"
+          transform="rotate(-90 65 65)"/>
+        <!-- Sync arrow tip (top of arc) -->
+        <polygon points="65,4 60,14 70,14" fill="rgba(56,189,248,0.85)"/>
+        <!-- Small dot (end of arc) -->
+        <circle cx="65" cy="126" r="3" fill="rgba(168,85,247,0.7)"/>
+      </svg>
+
+      <!-- Inner circle with lightning bolt -->
+      <div class="logo-inner">
+        <svg class="logo-bolt" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+          </defs>
+          <!-- Lightning bolt path -->
+          <path d="M26 4L12 24H22L18 40L32 20H22L26 4Z"
+            fill="url(#boltGrad)"
+            filter="drop-shadow(0 0 6px rgba(56,189,248,0.6))"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Wordmark -->
+    <div class="wordmark">FitSync</div>
+
+    <!-- Tagline -->
+    <p class="tagline">Train smarter. Eat better. Build your community. Every single day.</p>
+
+    <!-- Pillar chips -->
+    <div class="pillar-row">
+      <div class="pillar-chip"><span>🏋️</span><span>Training</span></div>
+      <div class="pillar-chip"><span>🥗</span><span>Nutrition</span></div>
+      <div class="pillar-chip"><span>🌍</span><span>Community</span></div>
+      <div class="pillar-chip"><span>🔥</span><span>Streaks</span></div>
+    </div>
+
+    <!-- Enter CTA -->
+    <button class="enter-btn" onclick="enter()">
+      Get Started
+      <span class="enter-arrow">→</span>
+    </button>
+
+  </div>
+
+  <div class="build-note">FitSync · Your wellbeing, built around you</div>
+
+  <script>
+    function enter() {
+      sessionStorage.setItem("fs_seen_welcome", "1");
+      window.location.href = "index.html";
+    }
+  </script>
+
+</body>
+</html>

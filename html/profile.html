@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync — My Profile</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+  <!-- Auth guard -->
+  <script>if (!sessionStorage.getItem("fs_current")) window.location.href = "index.html";</script>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+    <div>
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToDashboard()">Planner</button>
+      <button onclick="goToCommunity()">Community</button>
+      <button onclick="goToMeals()">Meals</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <main class="profile-main">
+
+    <!-- ── ACCOUNT CARD ───────────────────────────────────────────────────────── -->
+    <div class="profile-account-card">
+      <div class="profile-avatar" id="profileAvatar"></div>
+      <div class="profile-account-info">
+        <h2 class="profile-username" id="profileUsername"></h2>
+        <p class="profile-subtitle">FitSync Member</p>
+      </div>
+    </div>
+
+    <!-- ── PLAN HISTORY ──────────────────────────────────────────────────────── -->
+    <section class="card profile-section">
+      <div class="profile-section-header">
+        <h3>Exercise Plan History</h3>
+        <button class="profile-edit-btn" onclick="goToDashboard()">+ New Plan</button>
+      </div>
+      <div id="planHistoryContent"></div>
+    </section>
+
+    <!-- ── MEAL PLAN HISTORY ─────────────────────────────────────────────────── -->
+    <section class="card profile-section">
+      <div class="profile-section-header">
+        <h3>Meal Plan History</h3>
+        <button class="profile-edit-btn" onclick="goToMeals()">+ New Meal Plan</button>
+      </div>
+      <div id="mealHistoryContent"></div>
+    </section>
+
+    <!-- ── DANGER ZONE ────────────────────────────────────────────────────────── -->
+    <section class="card profile-section profile-danger-section">
+      <h3 class="profile-danger-title">Danger Zone</h3>
+      <p class="profile-danger-desc">These actions are permanent and cannot be reversed.</p>
+      <div class="profile-danger-actions">
+        <button class="profile-danger-btn profile-danger-clear" onclick="confirmClearData()">
+          Clear Plan Data
+        </button>
+        <button class="profile-danger-btn profile-danger-delete" onclick="confirmDeleteAccount()">
+          Delete Account
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── CONFIRM MODAL ──────────────────────────────────────────────────────── -->
+  <div id="confirmModal" class="confirm-modal" style="display:none">
+    <div class="confirm-box">
+      <p class="confirm-message" id="confirmMessage"></p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="confirm-proceed" id="confirmProceedBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="../js/navigation.js"></script>
+
+  <script type="module">
+    import { clearUserData, deleteAccount } from '../js/auth.js';
+
+    const username = sessionStorage.getItem("fs_current");
+    const prefix   = `fs_${username.toLowerCase()}_`;
+
+    document.getElementById("profileUsername").textContent = username;
+    document.getElementById("profileAvatar").textContent   = username.charAt(0).toUpperCase();
+
+    // ── Label maps ────────────────────────────────────────────────────────────
+    const GOAL_LABELS  = { lose:"🔥 Lose Weight & Burn Fat", gain:"💪 Gain Muscle & Strength", maintain:"🧘 Maintain & Stay Balanced" };
+    const LEVEL_LABELS = { beginner:"Beginner — new to structured training", intermediate:"Intermediate — 6+ months consistent", advanced:"Advanced — 2+ years, progressive overload" };
+    const SPACE_LABELS = { mat_only:"Mat only", full_room:"Full room", large_space:"Large space / garage", open_outdoor:"Open outdoor" };
+    const LOCATION_LABELS = { indoor:"Indoors", outdoor:"Outdoors", both:"Both / No preference" };
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function profileRows(p) {
+      const rows = [];
+      if (p.goal)                   rows.push(["Goal", GOAL_LABELS[p.goal] || p.goal]);
+      if (p.height && p.weight)     rows.push(["Body Stats", `${p.height} ${p.heightUnit||"cm"} · ${p.weight} ${p.weightUnit||"kg"}`]);
+      if (p.fitnessExperience)      rows.push(["Background", `<span class="profile-freetext">${escHtml(p.fitnessExperience)}</span>`]);
+      const level = p.level || p.detectedLevel;
+      if (level)                    rows.push(["Fitness Level", LEVEL_LABELS[level] || level]);
+      if (p.healthConditions?.length)   rows.push(["Health Conditions", p.healthConditions.map(t=>`<span class="profile-tag">${escHtml(t)}</span>`).join("")]);
+      if (p.dietaryPreferences?.length) rows.push(["Dietary Preferences", p.dietaryPreferences.map(t=>`<span class="profile-tag">${escHtml(t)}</span>`).join("")]);
+      if (p.equipmentAvailable?.length) rows.push(["Equipment", p.equipmentAvailable.map(t=>`<span class="profile-tag">${escHtml(t)}</span>`).join("")]);
+      if (p.sessionMinutes)         rows.push(["Session Duration", `${p.sessionMinutes} minutes`]);
+      if (p.workoutSpace)           rows.push(["Workout Space", SPACE_LABELS[p.workoutSpace] || p.workoutSpace]);
+      if (p.locationPreference)     rows.push(["Training Location", LOCATION_LABELS[p.locationPreference] || p.locationPreference]);
+      return rows;
+    }
+
+    // ── Shopping list builder (for modal) ────────────────────────────────────
+    function buildModalShoppingHTML(days, groceriesRaw, dietary, goal) {
+      const alreadyHave = (groceriesRaw||"").toLowerCase().split(/[,\n]+/).map(s=>s.trim()).filter(Boolean);
+      const userHas = item => alreadyHave.some(h => item.toLowerCase().includes(h) || h.includes(item.toLowerCase().split(" ")[0]));
+      const countMap = {};
+      days.forEach(day => {
+        (day.meals||[]).forEach(meal => {
+          if (!meal.ingredients) return;
+          meal.ingredients.split(",").map(s=>s.trim()).filter(s=>s.length>1).forEach(ing => {
+            const key = ing.toLowerCase();
+            countMap[key] = (countMap[key]||0)+1;
+          });
+        });
+      });
+      const CATS = {
+        "🥬 Fresh Produce":      { test: i => /apple|banana|orange|berr|mango|spinach|lettuce|tomato|onion|garlic|carrot|broccoli|cauliflower|potato|avocado|lemon|lime|ginger|cucumber|peppers?|courgette|asparagus|pak choi|celery/.test(i), items: [] },
+        "🥩 Meat & Seafood":     { test: i => /chicken|beef|pork|fish|salmon|tuna|turkey|lamb|shrimp|prawn|mackerel|halal/.test(i), items: [] },
+        "🥛 Dairy & Eggs":       { test: i => /milk|cheese|yogh?urt|butter|cream|egg|ricotta|cottage cheese|halloumi/.test(i), items: [] },
+        "🥫 Grains & Pulses":    { test: i => /rice|pasta|bread|flour|oat|quinoa|lentil|bean|chickpea|noodle|pitta|bulgur|buckwheat|millet|tempeh|tofu/.test(i), items: [] },
+        "🥜 Nuts, Seeds & Oils": { test: i => /nut|seed|almond|walnut|chia|flax|oil|peanut|sunflower|sesame|tahini/.test(i), items: [] },
+        "🧂 Condiments":         { test: i => /sauce|soy|honey|maple|vinegar|mustard|pesto|hummus|salsa|teriyaki|coconut milk|curry/.test(i), items: [] },
+        "🫙 Pantry Extras":      { test: () => true, items: [] },
+      };
+      const qty = (ing, count) => {
+        const i = ing.toLowerCase();
+        if (/chicken|beef|salmon|tuna|turkey|lamb|fish|pork/.test(i)) return `${count*150}g`;
+        if (/yogh?urt|cottage cheese/.test(i)) return `${count*180}g`;
+        if (/oat/.test(i)) return `${count*50}g`;
+        if (/rice|quinoa|pasta|bulgur/.test(i)) return `${count*80}g`;
+        if (/egg/.test(i)) return `${count*2} eggs`;
+        if (/milk/.test(i)) return `${Math.round(count*0.25*10)/10}L`;
+        if (/bread|pitta/.test(i)) return `${count} serving${count>1?"s":""}`;
+        return `×${count}`;
+      };
+      Object.entries(countMap).forEach(([ing, count]) => {
+        if (userHas(ing)) return;
+        const display = ing.charAt(0).toUpperCase()+ing.slice(1);
+        const label   = `${display} — ${qty(ing, count)}`;
+        for (const [, cat] of Object.entries(CATS)) { if (cat.test(ing)) { cat.items.push(label); break; } }
+      });
+      const filledCats = Object.entries(CATS).filter(([,c])=>c.items.length>0);
+      if (!filledCats.length) return `<p class="pvm-section-title">🛒 Shopping List</p><p style="font-size:13px;color:var(--text-secondary);padding:8px 0">Everything on this plan was in your kitchen already! 🎉</p>`;
+
+      const wk = days.reduce((acc,day) => { (day.meals||[]).forEach(m=>{acc.cal+=(m.calories||0);acc.prot+=(m.protein||0);acc.carbs+=(m.carbs||0);acc.fat+=(m.fat||0);}); return acc; }, {cal:0,prot:0,carbs:0,fat:0});
+      const dayAvgCal  = Math.round(wk.cal/7);
+      const dayAvgProt = Math.round(wk.prot/7);
+      const total      = (wk.prot*4)+(wk.carbs*4)+(wk.fat*9)||1;
+      const protPct    = Math.round((wk.prot*4/total)*100);
+      const carbPct    = Math.round((wk.carbs*4/total)*100);
+      const fatPct     = Math.round((wk.fat*9/total)*100);
+      const goalNote   = goal==="lose"?`~${dayAvgCal} kcal/day (deficit)`:goal==="gain"?`~${dayAvgCal} kcal/day (surplus)`:`~${dayAvgCal} kcal/day (maintenance)`;
+      const totalItems = filledCats.reduce((s,[,c])=>s+c.items.length,0);
+
+      return `
+        <div class="pvm-section-title">🛒 Shopping List</div>
+        <p style="font-size:12px;color:var(--text-secondary);margin:0 0 12px">${totalItems} items · excluding what you had in your kitchen</p>
+        <div class="pvm-cat-grid" id="pvmCatGrid">
+          ${filledCats.map(([name,cat])=>`
+            <div class="pvm-cat-box">
+              <h4>${name}</h4>
+              <ul class="shopping-items">${cat.items.map(item=>`<li class="shopping-item">${item}</li>`).join("")}</ul>
+            </div>`).join("")}
+          <div class="pvm-cat-spacer"></div><div class="pvm-cat-spacer"></div><div class="pvm-cat-spacer"></div>
+        </div>
+        <div class="pvm-nutrition-widget">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent-blue);margin-bottom:14px">📊 7-Day Nutrition Targets</div>
+          <div class="pvm-nutri-grid">
+            <div class="pvm-nutri-stats">
+              <div class="pvm-nutri-stat"><div class="pvm-nutri-val">${wk.cal.toLocaleString()}</div><div class="pvm-nutri-label">Total kcal / wk</div></div>
+              <div class="pvm-nutri-stat"><div class="pvm-nutri-val">${dayAvgCal}</div><div class="pvm-nutri-label">Avg kcal / day</div></div>
+              <div class="pvm-nutri-stat"><div class="pvm-nutri-val">${wk.prot}g</div><div class="pvm-nutri-label">Total protein / wk</div></div>
+              <div class="pvm-nutri-stat"><div class="pvm-nutri-val">${dayAvgProt}g</div><div class="pvm-nutri-label">Avg protein / day</div></div>
+            </div>
+            <div class="pvm-nutri-bars">
+              <div style="font-size:11px;color:var(--accent-green);font-weight:700;margin-bottom:10px">${goalNote}</div>
+              <div class="snw-bar-row"><span class="snw-bar-label">Protein</span><div class="snw-bar-track"><div class="snw-bar-fill snw-bar-protein" style="width:${protPct}%"></div></div><span class="snw-bar-pct">${protPct}%</span></div>
+              <div class="snw-bar-row"><span class="snw-bar-label">Carbs</span><div class="snw-bar-track"><div class="snw-bar-fill snw-bar-carbs" style="width:${carbPct}%"></div></div><span class="snw-bar-pct">${carbPct}%</span></div>
+              <div class="snw-bar-row"><span class="snw-bar-label">Fat</span><div class="snw-bar-track"><div class="snw-bar-fill snw-bar-fat" style="width:${fatPct}%"></div></div><span class="snw-bar-pct">${fatPct}%</span></div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // ── View a specific exercise plan — navigate to schedule.html ────────────
+    window.viewExercisePlan = function(idx) {
+      sessionStorage.setItem("fs_viewPlanHistIdx", idx);
+      window.location.href = "schedule.html";
+    };
+
+    // ── View a specific meal plan — navigate to meals.html ────────────────────
+    window.viewMealPlan = function(idx) {
+      sessionStorage.setItem("fs_viewMealHistIdx", idx);
+      window.location.href = "meals.html";
+    };
+
+    // ── Render plan history ────────────────────────────────────────────────────
+    function renderPlanHistory() {
+      const el = document.getElementById("planHistoryContent");
+
+      let history = null;
+      try { history = JSON.parse(localStorage.getItem(prefix + "planHistory") || "null"); } catch {}
+      if (!history) {
+        const rawProfile = localStorage.getItem(prefix + "planProfile");
+        const rawPlan    = localStorage.getItem(prefix + "currentPlan");
+        if (rawProfile || rawPlan) {
+          try {
+            history = [{
+              profile:     rawProfile ? JSON.parse(rawProfile) : null,
+              plan:        rawPlan    ? JSON.parse(rawPlan)    : null,
+              generatedAt: (() => { try { return JSON.parse(rawPlan)?.generatedAt || new Date().toISOString(); } catch { return new Date().toISOString(); } })(),
+            }];
+          } catch { history = []; }
+        } else { history = []; }
+      }
+
+      if (!history.length) {
+        el.innerHTML = `
+          <div class="profile-empty">
+            <span class="profile-empty-icon">📝</span>
+            <p>No plans generated yet.</p>
+            <button class="profile-cta-btn" onclick="goToDashboard()">Generate Your First Plan →</button>
+          </div>`;
+        return;
+      }
+
+      el.innerHTML = [...history].reverse().map((entry, revIdx) => {
+        const origIdx  = history.length - 1 - revIdx;
+        const p        = entry.profile || {};
+        const plan     = entry.plan    || {};
+        const isLatest = revIdx === 0;
+        const date     = new Date(entry.generatedAt);
+        const dateStr  = date.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+        const timeStr  = date.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+        const planSum  = plan.days?.length ? `${plan.days.length} session${plan.days.length!==1?"s":""}${plan.splitName?" · "+plan.splitName:""}` : "";
+        const rows     = profileRows(p);
+
+        return `
+          <div class="plan-history-entry${isLatest?" plan-history-latest":""}">
+            <div class="plan-history-header">
+              <div class="plan-history-meta">
+                <span class="plan-history-date">${dateStr} at ${timeStr}</span>
+                ${isLatest?'<span class="plan-history-badge">Latest</span>':""}
+                ${planSum?`<span class="plan-history-summary">${planSum}</span>`:""}
+              </div>
+              <div class="plan-history-actions">
+                ${plan.days?.length ? `<button class="profile-cta-btn" onclick="viewExercisePlan(${origIdx})">View Schedule →</button>` : ""}
+                <button class="profile-danger-btn profile-danger-clear" onclick="confirmDeleteEntry(${origIdx})">Delete</button>
+              </div>
+            </div>
+            ${rows.length ? `
+              <table class="profile-data-table">
+                ${rows.map(([label, value]) => `
+                  <tr>
+                    <td class="profile-data-label">${label}</td>
+                    <td class="profile-data-value">${value}</td>
+                  </tr>`).join("")}
+              </table>` : ""}
+          </div>`;
+      }).join('<hr class="plan-history-divider">');
+    }
+
+    window.confirmDeleteEntry = function(idx) {
+      showConfirm(
+        "Remove this plan entry? Your account and other entries will not be affected.",
+        () => {
+          let history = null;
+          try { history = JSON.parse(localStorage.getItem(prefix + "planHistory") || "null"); } catch {}
+          if (!history) return;
+          history.splice(idx, 1);
+          localStorage.setItem(prefix + "planHistory", JSON.stringify(history));
+          if (history.length) {
+            const latest = history[history.length - 1];
+            if (latest.plan)    localStorage.setItem(prefix + "currentPlan",  JSON.stringify(latest.plan));
+            if (latest.profile) localStorage.setItem(prefix + "planProfile",  JSON.stringify(latest.profile));
+          } else {
+            localStorage.removeItem(prefix + "currentPlan");
+            localStorage.removeItem(prefix + "planProfile");
+          }
+          closeConfirm();
+          renderPlanHistory();
+        }
+      );
+    };
+
+    // ── Confirm modal ──────────────────────────────────────────────────────────
+    window.confirmClearData = function() {
+      showConfirm(
+        "This will permanently delete all your plan history and generated plans. Your account will remain. Continue?",
+        () => { clearUserData(username); closeConfirm(); renderPlanHistory(); renderMealHistory(); }
+      );
+    };
+
+    window.confirmDeleteAccount = function() {
+      showConfirm(
+        `This will permanently delete your account "${username}" and all associated data. This cannot be undone.`,
+        () => deleteAccount(username)
+      );
+    };
+
+    function showConfirm(message, onProceed) {
+      document.getElementById("confirmMessage").textContent = message;
+      document.getElementById("confirmProceedBtn").onclick = onProceed;
+      document.getElementById("confirmModal").style.display = "flex";
+    }
+    window.closeConfirm = function() { document.getElementById("confirmModal").style.display = "none"; };
+
+    // ── Render meal plan history ───────────────────────────────────────────────
+    function renderMealHistory() {
+      const el = document.getElementById("mealHistoryContent");
+      let history = null;
+      try { history = JSON.parse(localStorage.getItem(prefix + "mealHistory") || "null"); } catch {}
+
+      if (!history?.length) {
+        el.innerHTML = `
+          <div class="profile-empty">
+            <span class="profile-empty-icon">🍽️</span>
+            <p>No meal plans generated yet.</p>
+            <button class="profile-cta-btn" onclick="goToMeals()">Generate Your First Meal Plan →</button>
+          </div>`;
+        return;
+      }
+
+      el.innerHTML = [...history].reverse().map((entry, revIdx) => {
+        const origIdx  = history.length - 1 - revIdx;
+        const isLatest = revIdx === 0;
+        const date     = new Date(entry.generatedAt);
+        const dateStr  = date.toLocaleDateString("en-GB", { day:"numeric", month:"short", year:"numeric" });
+        const timeStr  = date.toLocaleTimeString("en-GB", { hour:"2-digit", minute:"2-digit" });
+        const summary  = entry.summary || "";
+        const days     = entry.days?.length ?? 0;
+        const dietary  = entry.inputs?.dietary || [];
+        const groceries = entry.inputs?.groceries || "";
+
+        return `
+          <div class="plan-history-entry${isLatest?" plan-history-latest":""}">
+            <div class="plan-history-header">
+              <div class="plan-history-meta">
+                <span class="plan-history-date">${dateStr} at ${timeStr}</span>
+                ${isLatest?'<span class="plan-history-badge">Latest</span>':""}
+                ${summary?`<span class="plan-history-summary">${escHtml(summary)}</span>`:""}
+                ${days?`<span class="plan-history-summary">${days}-day plan</span>`:""}
+              </div>
+              <div class="plan-history-actions">
+                ${days ? `<button class="profile-cta-btn" onclick="viewMealPlan(${origIdx})">View Meal Plan →</button>` : ""}
+                <button class="profile-danger-btn profile-danger-clear" onclick="confirmDeleteMealEntry(${origIdx})">Delete</button>
+              </div>
+            </div>
+            ${dietary.length?`<div style="margin-top:8px">${dietary.map(t=>`<span class="profile-tag">${escHtml(t)}</span>`).join("")}</div>`:""}
+            ${groceries?`<p style="font-size:13px;color:var(--text-secondary);margin:8px 0 0"><strong>Ingredients used:</strong> ${escHtml(groceries)}</p>`:""}
+          </div>`;
+      }).join('<hr class="plan-history-divider">');
+    }
+
+    window.confirmDeleteMealEntry = function(idx) {
+      showConfirm(
+        "Remove this meal plan? Your other meal plans and account will not be affected.",
+        () => {
+          let history = null;
+          try { history = JSON.parse(localStorage.getItem(prefix + "mealHistory") || "null"); } catch {}
+          if (!history) return;
+          history.splice(idx, 1);
+          localStorage.setItem(prefix + "mealHistory", JSON.stringify(history));
+          closeConfirm();
+          renderMealHistory();
+        }
+      );
+    };
+
+    renderPlanHistory();
+    renderMealHistory();
+  </script>
+
+</body>
+</html>

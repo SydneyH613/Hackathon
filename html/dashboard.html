@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitSync — Planner</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <script>if (!sessionStorage.getItem("fs_current")) window.location.href = "index.html";</script>
+
+  <nav>
+    <h1 onclick="goHome()">⚡ FitSync</h1>
+    <div>
+      <span class="nav-welcome" id="navWelcomeName"></span>
+      <button onclick="goToCommunity()">Community</button>
+      <button onclick="goToMeals()">Meals</button>
+      <button onclick="goToProfile()">Profile</button>
+      <button onclick="goHome()">Home</button>
+      <button class="nav-btn-outline" onclick="doSignOut()">Sign Out</button>
+    </div>
+  </nav>
+
+  <!-- ── CALENDAR ───────────────────────────────────────────────────────────── -->
+  <div class="cal-sync-wrap">
+
+    <div class="cal-sync-banner">
+      <div class="cal-sync-left">
+        <div class="cal-sync-icon-wrap">🗓️</div>
+        <div>
+          <h3 class="cal-sync-title">Your Schedule</h3>
+          <p class="cal-sync-desc">
+            Import your existing commitments so FitSync can schedule training around them.
+          </p>
+        </div>
+      </div>
+      <div class="cal-sync-btns">
+        <button id="calConnectBtn" onclick="connectGoogleCalendar()">Google Calendar</button>
+        <button class="btn-demo" onclick="triggerICSImport()">Import .ics</button>
+        <button class="btn-demo" onclick="toggleManualCalendar()">Enter Manually</button>
+        <button class="btn-demo" onclick="loadDemoEvents()">Load Demo</button>
+        <button class="btn-setup" onclick="toggleClientIdSetup()">⚙️</button>
+      </div>
+    </div>
+
+    <!-- CLIENT ID SETUP PANEL -->
+    <div id="clientIdSetup" class="client-id-panel">
+      <div class="setup-guide">
+        <p class="setup-guide-title">Google Client ID — one-time setup</p>
+        <ol class="setup-steps">
+          <li>Go to <a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a> and open or create a project.</li>
+          <li>Navigate to <strong>APIs &amp; Services → Library</strong> and enable the <strong>Google Calendar API</strong>.</li>
+          <li>Go to <strong>Credentials → + Create Credentials → OAuth client ID</strong>.</li>
+          <li>Select <strong>Web application</strong> and add your site URL under <em>Authorised JavaScript origins</em>.</li>
+          <li>Copy the <strong>Client ID</strong> and paste it below.</li>
+        </ol>
+      </div>
+      <div class="client-id-row">
+        <input type="text" id="clientIdInput" placeholder="…apps.googleusercontent.com" autocomplete="off">
+        <button onclick="saveClientId()">Save</button>
+      </div>
+    </div>
+
+    <div id="calStatus" class="cal-status"></div>
+    <div id="calTimeline" class="cal-timeline"></div>
+
+    <!-- MANUAL CALENDAR -->
+    <div id="manualCalWrap" class="manual-cal-wrap">
+      <div class="manual-cal-header">
+        <span>Manual Entry</span>
+        <button class="manual-cal-close" onclick="toggleManualCalendar()">✕ Close</button>
+      </div>
+      <p class="manual-cal-hint">Add any commitments that should be worked around.</p>
+      <div id="manualCalGrid" class="manual-cal-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- ── PLAN FORM ──────────────────────────────────────────────────────────── -->
+  <main class="dash-main">
+    <section class="card dash-card">
+      <h2>Your Training Profile</h2>
+
+      <!-- A: GOAL -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">A</span> Goal</div>
+        <select id="goal">
+          <option value="lose">Fat Loss</option>
+          <option value="gain">Muscle &amp; Strength</option>
+          <option value="maintain">Maintenance</option>
+        </select>
+      </div>
+
+      <!-- B: BODY STATS -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">B</span> Body Stats <span class="optional-tag">(optional)</span></div>
+        <div class="body-metrics-row">
+          <div class="metric-field">
+            <label for="heightValue">Height</label>
+            <div class="metric-input-wrap">
+              <input id="heightValue" type="number" placeholder="175" min="100" max="250" step="1">
+              <select id="heightUnit">
+                <option value="cm">cm</option>
+                <option value="ft">ft</option>
+              </select>
+            </div>
+          </div>
+          <div class="metric-field">
+            <label for="weightValue">Weight</label>
+            <div class="metric-input-wrap">
+              <input id="weightValue" type="number" placeholder="75" min="30" max="300" step="0.5">
+              <select id="weightUnit">
+                <option value="kg">kg</option>
+                <option value="lbs">lbs</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div id="calorieEstimate" class="calorie-estimate-badge" style="display:none"></div>
+      </div>
+
+      <!-- C: TRAINING BACKGROUND -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">C</span> Training Background</div>
+        <label for="fitnessLevelText">Describe your experience</label>
+        <textarea id="fitnessLevelText" rows="3"
+          placeholder="e.g. 8 months at the gym, squat bodyweight, bench 60 kg, run 5k twice a week — or completely new to training."></textarea>
+        <div id="detectedLevelBadge" class="detected-level-badge" style="display:none"></div>
+
+        <label for="fitnessLevel">Level override <span class="optional-tag">(optional)</span></label>
+        <select id="fitnessLevel">
+          <option value="">Auto-detect</option>
+          <option value="beginner">Beginner</option>
+          <option value="intermediate">Intermediate</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+
+      <!-- D: HEALTH CONDITIONS -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">D</span> Health Conditions <span class="optional-tag">(optional)</span></div>
+        <div class="dynamic-input-section" id="healthConditionsSection">
+          <div class="input-with-add">
+            <input type="text" id="healthConditionInput" placeholder="e.g. back pain, asthma, knee injury" autocomplete="off">
+            <button type="button" id="addHealthCondition" class="add-btn">+ Add</button>
+          </div>
+          <div class="dynamic-tags" id="healthConditionTags"></div>
+          <div class="analysis-feedback" id="healthAnalysisFeedback"></div>
+        </div>
+      </div>
+
+      <!-- E: DIETARY PREFERENCES -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">E</span> Dietary Preferences <span class="optional-tag">(optional)</span></div>
+        <div class="dynamic-input-section" id="dietarySection">
+          <div class="input-with-add">
+            <input type="text" id="dietaryInput" placeholder="e.g. vegetarian, gluten-free, halal" autocomplete="off">
+            <button type="button" id="addDietary" class="add-btn">+ Add</button>
+          </div>
+          <div class="dynamic-tags" id="dietaryTags"></div>
+          <div class="analysis-feedback" id="dietaryAnalysisFeedback"></div>
+        </div>
+      </div>
+
+      <!-- F: SESSION DURATION -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">F</span> Session Duration</div>
+        <select id="sessionMinutes">
+          <option value="30">30 minutes</option>
+          <option value="45" selected>45 minutes</option>
+          <option value="60">60 minutes</option>
+          <option value="75">75 minutes</option>
+        </select>
+      </div>
+
+      <!-- G: EQUIPMENT -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">G</span> Equipment</div>
+        <div class="dynamic-input-section" id="equipmentSection">
+          <div class="input-with-add">
+            <input type="text" id="equipmentInput" placeholder="e.g. dumbbells, barbell, treadmill" autocomplete="off">
+            <button type="button" id="addEquipment" class="add-btn">+ Add</button>
+          </div>
+          <div class="dynamic-tags" id="equipmentTags"></div>
+          <div class="analysis-feedback" id="equipmentAnalysisFeedback"></div>
+        </div>
+      </div>
+
+      <!-- H: TRAINING ENVIRONMENT -->
+      <div class="form-section">
+        <div class="form-section-label"><span class="section-num">H</span> Training Environment</div>
+        <label for="workoutSpace">Space</label>
+        <select id="workoutSpace">
+          <option value="mat_only">Mat only</option>
+          <option value="full_room" selected>Full room</option>
+          <option value="large_space">Large space / garage</option>
+          <option value="open_outdoor">Outdoor</option>
+        </select>
+
+        <label for="locationPreference">Location preference</label>
+        <select id="locationPreference">
+          <option value="indoor" selected>Indoors</option>
+          <option value="outdoor">Outdoors</option>
+          <option value="both">No preference</option>
+        </select>
+
+        <div class="weather-note-banner" id="weatherNoteBanner" style="display:none">
+          <span>🌤️</span>
+          <span id="weatherNoteText">Location detected — weather conditions will be considered for outdoor sessions.</span>
+        </div>
+      </div>
+
+      <button class="generate-cta" onclick="generatePlan()">
+        <span class="generate-cta-label">Generate Plan</span>
+        <span class="generate-cta-arrow">→</span>
+      </button>
+    </section>
+
+    <div id="planSummary" style="display:none"></div>
+    <div id="planOutput"  style="display:none"></div>
+    <div id="planActions" style="display:none"></div>
+  </main>
+
+  <script type="module" src="../js/navigation.js"></script>
+  <script type="module" src="../js/script.js"></script>
+
+</body>
+</html>

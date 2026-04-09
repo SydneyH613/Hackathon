@@ -3510,34 +3510,30 @@ details[open] .sched-steps-toggle::before { transform: rotate(90deg); }
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px 48px 32px;
-  align-items: stretch;
+  align-items: start;
 }
 
-.meals-left { display: flex; flex-direction: column; gap: 24px; height: 100%; }
+.meals-left { display: flex; flex-direction: column; gap: 24px; position: sticky; top: 24px; }
 
 .meals-right {
   display: flex;
   flex-direction: column;
   gap: 24px;
-  height: 100%;
 }
 
-/* Meal Plan card stretches to match left column height */
+/* Meal Plan card */
 .meals-right > .card {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .meals-right > .card > #mealOutput {
-  flex: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Empty state fills the card height, content centred */
+/* Empty state centred with minimum height */
 .meals-right > .card > #mealOutput > .empty-state {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3545,9 +3541,8 @@ details[open] .sched-steps-toggle::before { transform: rotate(90deg); }
   min-height: 200px;
 }
 
-/* ── Meals left-column coaching card ────────────────────────────────────── */
+/* ── Meals right-column coaching card ───────────────────────────────────── */
 .meals-coach-card {
-  flex: 1;
   min-height: 160px;
   display: flex;
   flex-direction: column;
@@ -3753,6 +3748,18 @@ details[open] .sched-steps-toggle::before { transform: rotate(90deg); }
 
 /* ─── GROCERY STORE RESULTS ─────────────────────────────────────────────── */
 
+#storeResults {
+  max-height: 320px;
+  overflow-y: auto;
+  margin-top: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56,189,248,0.3) transparent;
+}
+#storeResults::-webkit-scrollbar { width: 4px; }
+#storeResults::-webkit-scrollbar-track { background: transparent; }
+#storeResults::-webkit-scrollbar-thumb { background: rgba(56,189,248,0.3); border-radius: 4px; }
+#storeResults:empty { display: none; }
+
 .stores-intro-text {
   font-size: 13px;
   color: var(--text-secondary);
@@ -3869,6 +3876,7 @@ input[type="text"]:focus {
 @media (max-width: 900px) {
   .dash-main     { padding: 24px 24px 48px; }
   .meals-main    { grid-template-columns: 1fr; padding: 24px 24px 48px; }
+  .meals-left    { position: static; }
   .cal-sync-wrap { padding: 0 24px; }
   main           { grid-template-columns: 1fr; padding: 24px 24px 48px; }
 }
@@ -4353,11 +4361,10 @@ input[type="text"]:focus {
 
 /* ── STORE PANEL GRID (new two-column nearby-stores layout) ─────────────── */
 .store-panel-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   margin-top: 14px;
-  align-items: start;
 }
 
 .store-panel-label {

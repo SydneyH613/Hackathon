@@ -15,6 +15,11 @@ window.saveData = saveData;
 window.getData  = getData;
 
 // ── CONSTANTS ─────────────────────────────────────────────────────────────────
+// Fill in your Google OAuth 2.0 Client ID here once and every user can connect
+// Google Calendar with a single click — no per-user setup required.
+// Leave as "" to fall back to the per-user ⚙️ manual entry panel.
+const GOOGLE_CLIENT_ID = "";
+
 const DAY_NAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const EQUIPMENT_LABELS = {
   bodyweight:"Bodyweight / mat", bike:"Bike", stairmaster:"StairMaster",
@@ -1682,14 +1687,29 @@ window.downloadSingleICS = function(dateISO) {
 
 // ── GOOGLE CALENDAR ───────────────────────────────────────────────────────────
 window.connectGoogleCalendar = function() {
-  const clientId = localStorage.getItem("googleClientId");
-  if (!clientId) { showToast("Please set up your Google Client ID first.", "warning"); toggleClientIdSetup(); return; }
+  // Use developer-embedded ID first, then fall back to per-user saved ID
+  const clientId = GOOGLE_CLIENT_ID || localStorage.getItem("googleClientId");
+  if (!clientId) {
+    showToast("Add your Google Client ID via ⚙️ first.", "warning");
+    toggleClientIdSetup();
+    return;
+  }
+  // Re-use cached token if still valid (tokens last 60 min; we cache for 50 min)
+  const cached    = sessionStorage.getItem("gcal_token");
+  const cachedExp = parseInt(sessionStorage.getItem("gcal_token_exp") || "0", 10);
+  if (cached && Date.now() < cachedExp) {
+    fetchCalendarEvents(cached);
+    return;
+  }
   try {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
       scope: "https://www.googleapis.com/auth/calendar.readonly",
       callback: res => {
         if (res.error) { showToast("Failed to connect to Google Calendar.", "error"); return; }
+        // Cache token for 50 minutes so same-session reconnects are instant
+        sessionStorage.setItem("gcal_token", res.access_token);
+        sessionStorage.setItem("gcal_token_exp", String(Date.now() + 50 * 60 * 1000));
         fetchCalendarEvents(res.access_token);
       },
     });
@@ -1730,7 +1750,15 @@ function fetchCalendarEvents(token) {
 
 window.toggleClientIdSetup = function() {
   const p = document.getElementById("clientIdSetup");
-  if (p) p.style.display = p.style.display === "none" ? "block" : "none";
+  if (!p) return;
+  const opening = p.style.display === "none" || p.style.display === "";
+  p.style.display = opening ? "block" : "none";
+  if (opening) {
+    // Pre-fill with previously saved ID so user doesn't have to retype
+    const input = document.getElementById("clientIdInput");
+    if (input && !input.value) input.value = localStorage.getItem("googleClientId") || "";
+    input?.focus();
+  }
 };
 window.saveClientId = function() {
   const v = document.getElementById("clientIdInput")?.value.trim();
@@ -1738,6 +1766,24 @@ window.saveClientId = function() {
   localStorage.setItem("googleClientId", v);
   showToast("Google Client ID saved!", "success");
   toggleClientIdSetup();
+};
+
+// ── APPLE CALENDAR ────────────────────────────────────────────────────────────
+window.showAppleCalendarHelp = function() {
+  const m = document.getElementById("appleCalModal");
+  if (m) m.style.display = "flex";
+};
+window.dismissAppleModal = function(e) {
+  // Close when clicking the backdrop or the × button
+  if (!e || e.target === e.currentTarget || e.currentTarget.classList.contains("apple-modal-close")) {
+    const m = document.getElementById("appleCalModal");
+    if (m) m.style.display = "none";
+  }
+};
+window.appleImportAndClose = function() {
+  const m = document.getElementById("appleCalModal");
+  if (m) m.style.display = "none";
+  triggerICSImport();
 };
 window.loadDemoEvents = function() {
   const t = new Date();
@@ -4364,6 +4410,15 @@ function initApp() {
 
   // ── Dashboard page ─────────────────────────────────────────────────────────
   if (document.getElementById("goal")) {
+    // Hide the ⚙️ Client ID gear button and setup panel when an ID is already
+    // baked into the code — users never need to see anything technical
+    if (GOOGLE_CLIENT_ID) {
+      const setupBtn = document.querySelector(".btn-setup");
+      const setupPanel = document.getElementById("clientIdSetup");
+      if (setupBtn)  setupBtn.style.display  = "none";
+      if (setupPanel) setupPanel.style.display = "none";
+    }
+
     // Wire calorie estimate updates
     ["heightValue","weightValue","heightUnit","weightUnit","goal"].forEach(id => {
       document.getElementById(id)?.addEventListener("input",  updateCalorieEstimate);

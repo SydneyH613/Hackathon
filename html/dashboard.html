@@ -38,6 +38,7 @@
       </div>
       <div class="cal-sync-btns">
         <button id="calConnectBtn" onclick="connectGoogleCalendar()">Google Calendar</button>
+        <button class="btn-apple" onclick="showAppleCalendarHelp()">Apple Calendar</button>
         <button class="btn-demo" onclick="triggerICSImport()">Import .ics</button>
         <button class="btn-demo" onclick="toggleManualCalendar()">Enter Manually</button>
         <button class="btn-demo" onclick="loadDemoEvents()">Load Demo</button>
@@ -223,8 +224,69 @@
     <div id="planActions" style="display:none"></div>
   </main>
 
+  <!-- ── APPLE CALENDAR MODAL ──────────────────────────────────────────────── -->
+  <div id="appleCalModal" class="apple-modal-backdrop" style="display:none" onclick="dismissAppleModal(event)">
+    <div class="apple-modal-box">
+      <button class="apple-modal-close" onclick="dismissAppleModal(event)" aria-label="Close">✕</button>
+      <div class="apple-modal-header">
+        <span class="apple-modal-icon">🍎</span>
+        <div>
+          <h3 class="apple-modal-title">Connect Apple Calendar</h3>
+          <p class="apple-modal-subtitle">Export your calendar as a file, then import it into FitSync.</p>
+        </div>
+      </div>
+
+      <div class="apple-modal-tabs">
+        <button class="apple-tab active" onclick="switchAppleTab(this,'mac')">Mac</button>
+        <button class="apple-tab" onclick="switchAppleTab(this,'iphone')">iPhone / iPad</button>
+        <button class="apple-tab" onclick="switchAppleTab(this,'icloud')">iCloud.com</button>
+      </div>
+
+      <div id="appleTab-mac" class="apple-tab-panel">
+        <ol class="apple-steps">
+          <li>Open <strong>Calendar</strong> on your Mac.</li>
+          <li>In the menu bar click <strong>File → Export → Export…</strong></li>
+          <li>Choose a save location and click <strong>Export</strong>. A <em>.ics</em> file is saved.</li>
+          <li>Click the button below and select that file.</li>
+        </ol>
+      </div>
+
+      <div id="appleTab-iphone" class="apple-tab-panel" style="display:none">
+        <ol class="apple-steps">
+          <li>On your iPhone / iPad open <strong>Settings → Calendar → Accounts</strong>.</li>
+          <li>Tap your iCloud account → <strong>iCloud.com</strong> and sign in on a browser, then follow the <em>iCloud.com</em> tab steps.</li>
+          <li>Alternatively, share a single calendar: open the <strong>Calendar</strong> app → tap the calendar name → <strong>Share Calendar</strong> → choose <strong>View-Only</strong> link and open it — this downloads an <em>.ics</em> feed.</li>
+          <li>Save the file, then click the button below to import it.</li>
+        </ol>
+      </div>
+
+      <div id="appleTab-icloud" class="apple-tab-panel" style="display:none">
+        <ol class="apple-steps">
+          <li>Go to <a href="https://www.icloud.com/calendar" target="_blank" rel="noopener">icloud.com/calendar</a> and sign in.</li>
+          <li>Click the <strong>share icon</strong> (broadcast waves) next to a calendar in the left sidebar.</li>
+          <li>Enable <strong>Public Calendar</strong> and copy the link shown.</li>
+          <li>Paste the link into your browser address bar, change <code>webcal://</code> to <code>https://</code>, and press Enter — your browser will download the <em>.ics</em> file.</li>
+          <li>Click the button below and select that file.</li>
+        </ol>
+      </div>
+
+      <button class="apple-modal-import-btn" onclick="appleImportAndClose()">
+        📂 Select &amp; Import .ics file
+      </button>
+    </div>
+  </div>
+
   <script type="module" src="../js/navigation.js"></script>
   <script type="module" src="../js/script.js"></script>
+  <script>
+    function switchAppleTab(btn, id) {
+      document.querySelectorAll(".apple-tab").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".apple-tab-panel").forEach(p => p.style.display = "none");
+      btn.classList.add("active");
+      const panel = document.getElementById("appleTab-" + id);
+      if (panel) panel.style.display = "block";
+    }
+  </script>
 
 </body>
 </html>

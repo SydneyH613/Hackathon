@@ -1,10 +1,10 @@
-# 🚀 Hackathon Project Website
+#  Hackathon Project Website
 
-🔗 **Live Site:** https://sydneyh613.github.io/Hackathon/
+ **Live Site:** https://sydneyh613.github.io/Hackathon/
 
 ---
 
-## 📌 Overview
+##  Overview
 
 This project is an interactive web application built during a hackathon. It focuses on creating a dynamic and engaging user experience using clean design, responsive layouts, and functional front-end logic.
 
@@ -12,7 +12,7 @@ The site demonstrates the ability to build a fully functional multi-page website
 
 ---
 
-## ✨ Features
+## Features
 
 * Responsive and modern UI
 * Interactive elements powered by JavaScript
@@ -22,7 +22,7 @@ The site demonstrates the ability to build a fully functional multi-page website
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 * HTML5
 * CSS3
@@ -30,7 +30,7 @@ The site demonstrates the ability to build a fully functional multi-page website
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 Hackathon/
 
@@ -42,7 +42,7 @@ Hackathon/
 
 ---
 
-## 🚀 How to Run Locally
+##  How to Run Locally
 
 1. Clone the repository:
    git clone https://github.com/sydneyh613/Hackathon.git
@@ -54,7 +54,7 @@ Hackathon/
 
 ---
 
-## 📈 Future Improvements
+## Future Improvements
 
 * Improve UI/UX design
 * Add animations and transitions
@@ -64,11 +64,11 @@ Hackathon/
 
 ---
 
-## 👤 Author
+## Author
 
 Sydney and Natanel 
 https://github.com/sydneyh613
 
 ---
 
-⭐ Feel free to fork, use, and improve this project!
+ Feel free to fork, use, and improve this project!
